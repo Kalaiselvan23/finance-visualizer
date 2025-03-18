@@ -1,53 +1,27 @@
+"use client"
+import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 
-// In a real app, you would fetch this data from your API
-const recentTransactions = [
-  {
-    id: "1",
-    description: "Grocery Shopping",
-    amount: 85.75,
-    date: new Date("2023-03-15"),
-    category: "Food",
-    type: "expense",
-  },
-  {
-    id: "2",
-    description: "Salary",
-    amount: 3500.0,
-    date: new Date("2023-03-01"),
-    category: "Income",
-    type: "income",
-  },
-  {
-    id: "3",
-    description: "Netflix Subscription",
-    amount: 15.99,
-    date: new Date("2023-03-10"),
-    category: "Entertainment",
-    type: "expense",
-  },
-  {
-    id: "4",
-    description: "Electricity Bill",
-    amount: 75.5,
-    date: new Date("2023-03-05"),
-    category: "Utilities",
-    type: "expense",
-  },
-  {
-    id: "5",
-    description: "Freelance Work",
-    amount: 750.0,
-    date: new Date("2023-03-12"),
-    category: "Income",
-    type: "income",
-  },
-]
-
 export function RecentTransactions() {
+  const [transactions, setTransactions] = useState([])
+
+  useEffect(() => {
+    async function fetchTransactions() {
+      try {
+        const response = await fetch("/api/dashboard")
+        const data = await response.json()
+        setTransactions(data.recentTransactions || [])
+      } catch (error) {
+        console.error("Error fetching transactions:", error)
+      }
+    }
+
+    fetchTransactions()
+  }, [])
+
   return (
     <Card>
       <CardHeader>
@@ -65,15 +39,15 @@ export function RecentTransactions() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentTransactions.map((transaction) => (
-              <TableRow key={transaction.id}>
+            {transactions.map((transaction) => (
+              <TableRow key={transaction._id}>
                 <TableCell className="font-medium">{transaction.description}</TableCell>
                 <TableCell>
                   <Badge variant={transaction.type === "income" ? "outline" : "secondary"}>
                     {transaction.category}
                   </Badge>
                 </TableCell>
-                <TableCell>{format(transaction.date, "MMM dd, yyyy")}</TableCell>
+                <TableCell>{format(new Date(transaction.date), "MMM dd, yyyy")}</TableCell>
                 <TableCell
                   className={`text-right ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}
                 >
@@ -87,4 +61,3 @@ export function RecentTransactions() {
     </Card>
   )
 }
-

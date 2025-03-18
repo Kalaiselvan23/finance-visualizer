@@ -1,17 +1,9 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
-
-// In a real app, you would fetch this data from your API
-const data = [
-  { name: "Food", value: 400 },
-  { name: "Rent", value: 800 },
-  { name: "Entertainment", value: 200 },
-  { name: "Utilities", value: 300 },
-  { name: "Transportation", value: 250 },
-]
 
 const COLORS = [
   "hsl(var(--chart-1))",
@@ -22,6 +14,32 @@ const COLORS = [
 ]
 
 export function CategoryPieChart() {
+  const [data, setData] = useState<{ name: string; value: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/dashboard")
+        const result = await response.json()
+
+        if (!response.ok) throw new Error(result.error || "Failed to fetch data")
+
+        setData(result.expensesByCategory || [])
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (loading) return <p>Loading...</p>
+  if (error) return <p className="text-red-500">Error: {error}</p>
+
   return (
     <Card>
       <CardHeader>
@@ -38,7 +56,7 @@ export function CategoryPieChart() {
               }
               return acc
             },
-            {} as Record<string, { label: string; color: string }>,
+            {} as Record<string, { label: string; color: string }>
           )}
           className="aspect-[4/3]"
         >
@@ -57,4 +75,3 @@ export function CategoryPieChart() {
     </Card>
   )
 }
-

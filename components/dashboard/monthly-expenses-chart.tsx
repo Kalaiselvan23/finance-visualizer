@@ -1,20 +1,37 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
-// In a real app, you would fetch this data from your API
-const data = [
-  { month: "Jan", expenses: 1200 },
-  { month: "Feb", expenses: 1800 },
-  { month: "Mar", expenses: 1400 },
-  { month: "Apr", expenses: 1300 },
-  { month: "May", expenses: 1900 },
-  { month: "Jun", expenses: 1600 },
-]
-
 export function MonthlyExpensesChart() {
+  const [data, setData] = useState<{ month: string; expenses: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/dashboard")
+        const result = await response.json()
+
+        if (!response.ok) throw new Error(result.error || "Failed to fetch data")
+
+        setData(result.expensesByMonth || [])
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (loading) return <p>Loading...</p>
+  if (error) return <p className="text-red-500">Error: {error}</p>
+
   return (
     <Card>
       <CardHeader>
@@ -24,10 +41,7 @@ export function MonthlyExpensesChart() {
       <CardContent>
         <ChartContainer
           config={{
-            expenses: {
-              label: "Expenses",
-              color: "hsl(var(--primary))",
-            },
+            expenses: { label: "Expenses", color: "hsl(var(--primary))" },
           }}
           className="aspect-[4/3]"
         >
@@ -45,4 +59,3 @@ export function MonthlyExpensesChart() {
     </Card>
   )
 }
-
