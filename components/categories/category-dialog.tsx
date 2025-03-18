@@ -27,8 +27,6 @@ const formSchema = z.object({
   }),
 })
 
-type FormValues = z.infer<typeof formSchema>
-
 interface CategoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -38,6 +36,8 @@ interface CategoryDialogProps {
     color: string
   } | null
 }
+
+type FormValues = z.infer<typeof formSchema>
 
 export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogProps) {
   const form = useForm<FormValues>({
@@ -54,22 +54,20 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
   })
 
   async function onSubmit(values: FormValues) {
-    // In a real app, you would call your API to save the category
-    // console.log(values)
-    await postData("categories",values,()=>{
-      toast(category ? "Category updated" : "Category created", {
-        description: `Successfully ${category ? "updated" : "created"} category "${values.name}"`,
-      })
-    },
-    (error)=>{
-      toast(category ? "Category updated" : "Category created", {
-        description: `Unable to ${category ? "updated" : "created"} category "${values.name}"`,
-      })
-    }
-  )
-
-    
-
+    await postData(
+      "categories",
+      values,
+      () => {
+        toast(category ? "Category updated" : "Category created", {
+          description: `Successfully ${category ? "updated" : "created"} category "${values.name}"`,
+        })
+      },
+      (error) => {
+        toast("Error", {
+          description: `Unable to ${category ? "update" : "create"} category "${values.name}"`,
+        })
+      }
+    )
     onOpenChange(false)
   }
 
@@ -105,7 +103,11 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                   <FormLabel>Color</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input placeholder="#22c55e" {...field} />
+                      <Input
+                        type="color"
+                        {...field}
+                        className="h-10 w-12 p-0 border-none cursor-pointer"
+                      />
                     </FormControl>
                     <div className="h-8 w-8 rounded-full border" style={{ backgroundColor: field.value }} />
                   </div>
@@ -122,4 +124,3 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
     </Dialog>
   )
 }
-

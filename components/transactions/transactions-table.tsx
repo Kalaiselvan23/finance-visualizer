@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 import { fetchData, deleteData } from "@/lib/api";
+import { useDate } from "@/contexts/DateContexts";
 
 type Transaction = {
   id: string;
@@ -33,6 +34,7 @@ type Transaction = {
 };
 
 export function TransactionsTable() {
+  const { date } = useDate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,14 @@ export function TransactionsTable() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
+    if (!date?.from || !date?.to) return;
+    const queryParams = new URLSearchParams({
+      startDate: date.from.toISOString(),
+      endDate: date.to.toISOString(),
+    }).toString();
+
     fetchData<Transaction[]>(
-      "/transactions",
+      `/transactions?${queryParams}`,
       (data) => {
         setTransactions(data);
         setLoading(false);
@@ -53,7 +61,7 @@ export function TransactionsTable() {
         setLoading(false);
       }
     );
-  }, []);
+  }, [date]);
 
   const handleDelete = (id: string) => {
     deleteData(
@@ -122,12 +130,10 @@ export function TransactionsTable() {
                     setDialogOpen(true);
                   }}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(transaction._id)}>
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
+                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(transaction.id)}>
+                  <Trash className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -162,7 +168,7 @@ export function TransactionsTable() {
           className="max-w-sm"
         />
       </div>
-
+      
       {loading ? (
         <div className="text-center py-4">Loading transactions...</div>
       ) : error ? (
@@ -174,47 +180,25 @@ export function TransactionsTable() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+                    <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
                   ))}
                 </TableRow>
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No transactions found.
-                  </TableCell>
+              {table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
                 </TableRow>
+              )) : (
+                <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">No transactions found.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </div>
       )}
-
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-sm text-muted-foreground">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </div>
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
-        </Button>
-      </div>
-
-      {dialogOpen && <TransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} transaction={editTransaction} />}
     </div>
   );
 }

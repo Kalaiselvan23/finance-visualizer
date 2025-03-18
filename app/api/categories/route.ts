@@ -23,8 +23,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const category = new Category(body)
     await category.save()
-    console.log(category)
-
     return NextResponse.json(category, { status: 201 })
   } catch (error) {
     console.error("Error creating category:", error)
