@@ -43,7 +43,8 @@ type FormValues = z.infer<typeof formSchema>
 
 interface TransactionDialogProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onSaveSuccess: () => void;
+  onOpenChange: (open: boolean) => void;
   transaction?: {
     id: string
     description: string
@@ -54,11 +55,9 @@ interface TransactionDialogProps {
   } | null
 }
 
-export function TransactionDialog({ open, onOpenChange, transaction }: TransactionDialogProps) {
+export function TransactionDialog({ open, onOpenChange, transaction, onSaveSuccess }: TransactionDialogProps) {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-
-  // Fetch categories on mount
   useEffect(() => {
     fetchData<{ id: string; name: string }[]>(
       "/categories",
@@ -87,23 +86,23 @@ export function TransactionDialog({ open, onOpenChange, transaction }: Transacti
         description: "",
         amount: 0,
         date: new Date(),
-        category: categories.length > 0 ? categories[0].name : "", // Ensure default category is valid
+        category: categories.length > 0 ? categories[0].name : "",
         type: "expense",
       },
   })
 
   async function onSubmit(values: FormValues) {
     try {
-      await postData("/transactions", values)
+      await postData("/transactions", values);
       toast.success(transaction ? "Transaction updated" : "Transaction created", {
         description: `Successfully ${transaction ? "updated" : "created"} transaction "${values.description}"`,
-      })
-      onOpenChange(false)
+      });
+      console.log(typeof onSaveSuccess)
+      onOpenChange(false);
     } catch (error) {
-      toast.error("Error submitting transaction", { description: error.message || "Something went wrong." })
+      toast.error("Error submitting transaction", { description: error.message || "Something went wrong." });
     }
   }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -190,11 +189,32 @@ export function TransactionDialog({ open, onOpenChange, transaction }: Transacti
                         </SelectItem>
                       ) : (
                         categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
+                          <SelectItem key={category._id} value={category.name}>
                             {category.name}
                           </SelectItem>
                         ))
                       )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="income">Income</SelectItem>
+                      <SelectItem value="expense">Expense</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

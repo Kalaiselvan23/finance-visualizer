@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import {
@@ -21,8 +21,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
-import { fetchData, deleteData } from "@/lib/api";
+import { fetchData, deleteData, updateData } from "@/lib/api";
 import { useDate } from "@/contexts/DateContexts";
+import { Spinner } from "../ui/loader";
+import { toast } from "sonner";
 
 type Transaction = {
   id: string;
@@ -43,8 +45,9 @@ export function TransactionsTable() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchTransactions = () => {
     if (!date?.from || !date?.to) return;
+    setLoading(true);
     const queryParams = new URLSearchParams({
       startDate: date.from.toISOString(),
       endDate: date.to.toISOString(),
@@ -61,13 +64,18 @@ export function TransactionsTable() {
         setLoading(false);
       }
     );
+  }
+
+  useEffect(() => {
+    fetchTransactions();
   }, [date]);
 
   const handleDelete = (id: string) => {
     deleteData(
       `/transactions/${id}`,
       () => {
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
+        toast("Deleted successfully");
+        setTransactions((prev) => prev.filter((t) => t._id !== id));
       },
       (err) => {
         console.error("Delete failed", err);
@@ -132,7 +140,7 @@ export function TransactionsTable() {
                 >
                   <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(transaction.id)}>
+                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(transaction._id)}>
                   <Trash className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -168,9 +176,8 @@ export function TransactionsTable() {
           className="max-w-sm"
         />
       </div>
-      
       {loading ? (
-        <div className="text-center py-4">Loading transactions...</div>
+        <Spinner />
       ) : error ? (
         <div className="text-center py-4 text-red-600">{error}</div>
       ) : (
@@ -180,25 +187,40 @@ export function TransactionsTable() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                    <TableHead key={header.id}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No transactions found.
+                  </TableCell>
                 </TableRow>
-              )) : (
-                <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">No transactions found.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </div>
       )}
+
+      <TransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        transaction={editTransaction}
+        onSaveSuccess={()=>fetchTransactions}
+      />
     </div>
   );
 }

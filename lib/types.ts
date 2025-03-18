@@ -1,5 +1,5 @@
 export type Budget={
-    id: string;
+    _id: string;
     category: string;
     amount: number;
     spent: number;
@@ -9,13 +9,13 @@ export type Budget={
 }
 
 export type Category={
-    id: string;
+    _id: string;
     name: string;
     color: string;
 }
 
 export type Transaction= {
-    id: string;
+    _id: string;
     description: string;
     amount: number;
     date: Date;

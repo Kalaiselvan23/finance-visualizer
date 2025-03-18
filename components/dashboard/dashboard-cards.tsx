@@ -48,7 +48,6 @@ export function DashboardCards() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">${data.totalIncome.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">+20.1% from last month</p>
         </CardContent>
       </Card>
 
@@ -59,7 +58,6 @@ export function DashboardCards() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">${data.totalExpenses.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">-4.5% from last month</p>
         </CardContent>
       </Card>
 
@@ -70,7 +68,6 @@ export function DashboardCards() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">${data.balance.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">+12.3% from last month</p>
         </CardContent>
       </Card>
 

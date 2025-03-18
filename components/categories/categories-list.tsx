@@ -9,20 +9,24 @@ import { CategoryDialog } from "@/components/categories/category-dialog"
 import { fetchData, deleteData } from "@/lib/api"
 import { Category } from "@/lib/types"
 import { toast } from "sonner"
+import { Spinner } from "../ui/loader"
 
 export function CategoriesList() {
   const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [isLoading,setLoading]=useState<boolean>(true);
 
   const fetchCategories = async () => {
     await fetchData<Category[]>(
       "categories",
       (data:Category[]) => {
         setCategories(data)
+        setLoading(false)
       },
       (error) => {
         toast(error)
+        setLoading(false);
       }
     )
   }
@@ -32,12 +36,10 @@ export function CategoriesList() {
   }, [])
 
   const handleDeleteFn = async (id: string) => {
-    console.log(`Deleting category: ${id}`)
-
     await deleteData(
       `categories/${id}`,
       () => {
-        setCategories((prev) => prev.filter((category) => category.id !== id))
+        setCategories((prev) => prev.filter((category) => category._id !== id))
       },
       (error) =>{
         toast(error)
@@ -45,11 +47,15 @@ export function CategoriesList() {
     )
   }
 
+  if(isLoading){
+    return <Spinner/>
+  }
+
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {categories.length > 0 ? (
         categories.map((category) => (
-          <Card key={category.id}>
+        <Card key={category._id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">{category.name}</CardTitle>
               <div className="h-6 w-6 rounded-full" style={{ backgroundColor: category.color }} />

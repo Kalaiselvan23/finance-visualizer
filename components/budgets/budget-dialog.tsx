@@ -29,6 +29,7 @@ type FormValues = z.infer<typeof formSchema>
 interface BudgetDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSaveSuccess:()=>void;
   budget?: {
     id: string
     category: string
@@ -42,7 +43,7 @@ interface BudgetDialogProps {
   year: number
 }
 
-export function BudgetDialog({ open, onOpenChange, budget, month, year }: BudgetDialogProps) {
+export function BudgetDialog({ open, onOpenChange, budget, month, year,onSaveSuccess }: BudgetDialogProps) {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -76,6 +77,7 @@ export function BudgetDialog({ open, onOpenChange, budget, month, year }: Budget
         toast(budget ? "Budget updated" : "Budget created", {
           description: `Successfully ${budget ? "updated" : "created"} budget for "${values.category}"`,
         })
+        onSaveSuccess();
       } else {
         toast("Unable to create budget..!!!")
       }
@@ -110,9 +112,9 @@ export function BudgetDialog({ open, onOpenChange, budget, month, year }: Budget
                     </FormControl>
                     <SelectContent>
                       {loading ? (
-                        <SelectItem value="" disabled>Loading...</SelectItem>
+                        <SelectItem value="loading" disabled>Loading...</SelectItem>
                       ) : error ? (
-                        <SelectItem value="" disabled>{error}</SelectItem>
+                        <SelectItem value="error" disabled>{error}</SelectItem>
                       ) : (
                         categories.map((category) => (
                           <SelectItem key={category._id} value={category.name}>
