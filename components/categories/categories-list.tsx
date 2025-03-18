@@ -39,7 +39,9 @@ export function CategoriesList() {
       () => {
         setCategories((prev) => prev.filter((category) => category.id !== id))
       },
-      (error) => console.error("Error deleting category:", error)
+      (error) =>{
+        toast(error)
+      }
     )
   }
 
