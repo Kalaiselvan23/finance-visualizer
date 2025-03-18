@@ -83,8 +83,8 @@ export function BudgetsList() {
                       className="text-red-600"
                       onClick={async () => {
                         try {
-                          await Api.delete(`/api/budgets/${budget.id}`)
-                          setBudgets((prev) => prev.filter((b) => b.id !== budget.id))
+                          await Api.delete(`/budgets/${budget._id}`)
+                          setBudgets((prev) => prev.filter((b) => b._id !== budget._id))
                         } catch (error) {
                           console.error("Error deleting budget", error)
                         }

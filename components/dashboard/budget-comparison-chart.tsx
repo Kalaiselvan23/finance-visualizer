@@ -2,38 +2,28 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { fetchData } from "@/lib/api"
+import { Budget } from "@/lib/types"
+import { useEffect, useState } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts"
-
-// In a real app, you would fetch this data from your API
-const data = [
-  {
-    category: "Food",
-    budget: 500,
-    actual: 400,
-  },
-  {
-    category: "Rent",
-    budget: 1000,
-    actual: 1000,
-  },
-  {
-    category: "Entertainment",
-    budget: 200,
-    actual: 250,
-  },
-  {
-    category: "Utilities",
-    budget: 300,
-    actual: 280,
-  },
-  {
-    category: "Transportation",
-    budget: 200,
-    actual: 180,
-  },
-]
-
+import { toast } from "sonner"
+import { useDate } from "@/contexts/DateContexts"  
 export function BudgetComparisonChart() {
+  const { date } = useDate()  
+  const [data, setData] = useState<Budget[]>([])
+
+  useEffect(() => {
+    if (!date?.from) return  
+    const month = date.from.getMonth() + 1
+    const year = date.from.getFullYear()
+
+    fetchData<Budget[]>(
+      `budgets?month=${month}&year=${year}`,
+      (data) => setData(data),
+      () => toast.error("Failed to load budget data")
+    )
+  }, [date]) 
+
   return (
     <Card>
       <CardHeader>
@@ -43,14 +33,8 @@ export function BudgetComparisonChart() {
       <CardContent>
         <ChartContainer
           config={{
-            budget: {
-              label: "Budget",
-              color: "hsl(var(--chart-1))",
-            },
-            actual: {
-              label: "Actual",
-              color: "hsl(var(--chart-2))",
-            },
+            budget: { label: "Budget", color: "hsl(var(--chart-1))" },
+            actual: { label: "Spent", color: "hsl(var(--chart-2))" },
           }}
           className="aspect-[16/9]"
         >
@@ -60,7 +44,7 @@ export function BudgetComparisonChart() {
               <XAxis dataKey="category" />
               <YAxis tickFormatter={(value) => `$${value}`} width={60} />
               <Bar dataKey="budget" fill="var(--color-budget)" radius={[4, 4, 0, 0]} barSize={20} />
-              <Bar dataKey="actual" fill="var(--color-actual)" radius={[4, 4, 0, 0]} barSize={20} />
+              <Bar dataKey="spent" fill="var(--color-actual)" radius={[4, 4, 0, 0]} barSize={20} />
               <Legend />
               <ChartTooltip content={<ChartTooltipContent />} />
             </BarChart>
@@ -70,4 +54,3 @@ export function BudgetComparisonChart() {
     </Card>
   )
 }
-

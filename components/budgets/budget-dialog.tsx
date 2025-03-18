@@ -115,7 +115,7 @@ export function BudgetDialog({ open, onOpenChange, budget, month, year }: Budget
                         <SelectItem value="" disabled>{error}</SelectItem>
                       ) : (
                         categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
+                          <SelectItem key={category._id} value={category.name}>
                             {category.name}
                           </SelectItem>
                         ))
