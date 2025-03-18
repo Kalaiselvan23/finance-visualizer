@@ -64,28 +64,9 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/reports")}>
-              <Link href="/reports">
-                <BarChart3 className="mr-2 h-4 w-4" />
-                <span>Reports</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+   
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/settings")}>
-              <Link href="/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarTrigger />
     </Sidebar>
   )
