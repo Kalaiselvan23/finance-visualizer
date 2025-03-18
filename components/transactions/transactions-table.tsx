@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { format } from "date-fns"
-import { Edit, MoreHorizontal, Trash } from "lucide-react"
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -13,106 +13,59 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { TransactionDialog } from "@/components/transactions/transaction-dialog"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TransactionDialog } from "@/components/transactions/transaction-dialog";
+import { fetchData, deleteData } from "@/lib/api";
 
-// In a real app, you would fetch this data from your API
-const transactions = [
-  {
-    id: "1",
-    description: "Grocery Shopping",
-    amount: 85.75,
-    date: new Date("2023-03-15"),
-    category: "Food",
-    type: "expense",
-  },
-  {
-    id: "2",
-    description: "Salary",
-    amount: 3500.0,
-    date: new Date("2023-03-01"),
-    category: "Income",
-    type: "income",
-  },
-  {
-    id: "3",
-    description: "Netflix Subscription",
-    amount: 15.99,
-    date: new Date("2023-03-10"),
-    category: "Entertainment",
-    type: "expense",
-  },
-  {
-    id: "4",
-    description: "Electricity Bill",
-    amount: 75.5,
-    date: new Date("2023-03-05"),
-    category: "Utilities",
-    type: "expense",
-  },
-  {
-    id: "5",
-    description: "Freelance Work",
-    amount: 750.0,
-    date: new Date("2023-03-12"),
-    category: "Income",
-    type: "income",
-  },
-  {
-    id: "6",
-    description: "Restaurant Dinner",
-    amount: 65.3,
-    date: new Date("2023-03-18"),
-    category: "Food",
-    type: "expense",
-  },
-  {
-    id: "7",
-    description: "Gas",
-    amount: 45.0,
-    date: new Date("2023-03-20"),
-    category: "Transportation",
-    type: "expense",
-  },
-  {
-    id: "8",
-    description: "Mobile Phone Bill",
-    amount: 55.0,
-    date: new Date("2023-03-08"),
-    category: "Utilities",
-    type: "expense",
-  },
-  {
-    id: "9",
-    description: "Gym Membership",
-    amount: 30.0,
-    date: new Date("2023-03-02"),
-    category: "Health",
-    type: "expense",
-  },
-  {
-    id: "10",
-    description: "Online Course",
-    amount: 199.99,
-    date: new Date("2023-03-25"),
-    category: "Education",
-    type: "expense",
-  },
-]
-
-type Transaction = (typeof transactions)[0]
+type Transaction = {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  category: string;
+  type: "income" | "expense";
+};
 
 export function TransactionsTable() {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchData<Transaction[]>(
+      "/transactions",
+      (data) => {
+        setTransactions(data);
+        setLoading(false);
+      },
+      (err) => {
+        setError("Failed to fetch transactions");
+        setLoading(false);
+      }
+    );
+  }, []);
+
+  const handleDelete = (id: string) => {
+    deleteData(
+      `/transactions/${id}`,
+      () => {
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+      },
+      (err) => {
+        console.error("Delete failed", err);
+      }
+    );
+  };
 
   const columns: ColumnDef<Transaction>[] = [
     {
@@ -124,32 +77,34 @@ export function TransactionsTable() {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <Badge variant={row.original.type === "income" ? "outline" : "secondary"}>{row.getValue("category")}</Badge>
+        <Badge variant={row.original.type === "income" ? "outline" : "secondary"}>
+          {row.getValue("category")}
+        </Badge>
       ),
     },
     {
       accessorKey: "date",
       header: "Date",
-      cell: ({ row }) => format(row.original.date, "MMM dd, yyyy"),
+      cell: ({ row }) => format(new Date(row.original.date), "MMM dd, yyyy"),
     },
     {
       accessorKey: "amount",
       header: () => <div className="text-right">Amount</div>,
       cell: ({ row }) => {
-        const amount = Number.parseFloat(row.getValue("amount"))
-        const type = row.original.type
+        const amount = Number.parseFloat(row.getValue("amount"));
+        const type = row.original.type;
 
         return (
           <div className={`text-right ${type === "income" ? "text-green-600" : "text-red-600"}`}>
             {type === "income" ? "+" : "-"}${amount.toFixed(2)}
           </div>
-        )
+        );
       },
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const transaction = row.original
+        const transaction = row.original;
 
         return (
           <div className="text-right">
@@ -163,30 +118,24 @@ export function TransactionsTable() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    setEditTransaction(transaction)
-                    setDialogOpen(true)
+                    setEditTransaction(transaction);
+                    setDialogOpen(true);
                   }}
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => {
-                    // In a real app, you would call your API to delete the transaction
-                    console.log("Delete transaction", transaction.id)
-                  }}
-                >
+                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(transaction._id)}>
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const table = useReactTable({
     data: transactions,
@@ -201,7 +150,7 @@ export function TransactionsTable() {
       sorting,
       columnFilters,
     },
-  })
+  });
 
   return (
     <div>
@@ -213,40 +162,46 @@ export function TransactionsTable() {
           className="max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
+
+      {loading ? (
+        <div className="text-center py-4">Loading transactions...</div>
+      ) : error ? (
+        <div className="text-center py-4 text-red-600">{error}</div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
                     <TableHead key={header.id}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No transactions found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No transactions found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
@@ -261,6 +216,5 @@ export function TransactionsTable() {
 
       {dialogOpen && <TransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} transaction={editTransaction} />}
     </div>
-  )
+  );
 }
-

@@ -12,36 +12,27 @@ import Api from "@/lib/api"
 import { Budget } from "@/lib/types"
 
 export function BudgetsList() {
-  const [budgets, setBudgets] = useState<Budget[]>([{
-    id: "1",
-    category: "Food",
-    amount: 500,
-    spent: 400,
-    month: 2,
-    year: 2023,
-    color: "#22c55e",
-  }])
-  const [editBudget, setEditBudget] = useState<typeof budgets[0] | null>(null)
+  const [budgets, setBudgets] = useState<Budget[]>([])
+  const [editBudget, setEditBudget] = useState<Budget | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // useEffect(() => {
-  //   const fetchBudgets = async () => {
-  //     try {
-  //       const response = await Api.get("/api/budgets")
-  //       setBudgets(response.data)
-  //       console.log(budgets)
-  //     } catch (err) {
-  //       setError("Failed to load budgets")
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-  //   fetchBudgets()
-  // }, [])
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      try {
+        const response = await Api.get("budgets?month=3&year=2025")
+        setBudgets(response.data)
+      } catch (err) {
+        setError("Failed to load budgets")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBudgets()
+  }, [])
 
-  // if (loading) return <p>Loading budgets...</p>
+  if (loading) return <p>Loading budgets...</p>
   if (error) return <p className="text-red-600">{error}</p>
 
   return (
@@ -59,9 +50,6 @@ export function BudgetsList() {
             <CardContent className="pt-4">
               <div className="mb-4 flex items-center justify-between">
                 <div className="text-2xl font-bold">${budget.amount.toFixed(2)}</div>
-                {/* <div className={`text-sm ${isOverBudget ? "text-red-600" : "text-muted-foreground"}`}>
-                  ${budget.spent.toFixed(2)} spent
-                </div> */}
               </div>
               <Progress
                 value={percentage > 100 ? 100 : percentage}
@@ -89,22 +77,20 @@ export function BudgetsList() {
                         setDialogOpen(true)
                       }}
                     >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                      <Edit className="mr-2 h-4 w-4" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={async () => {
                         try {
-                          await axios.delete(`/api/budgets/${budget.id}`)
+                          await Api.delete(`/api/budgets/${budget.id}`)
                           setBudgets((prev) => prev.filter((b) => b.id !== budget.id))
                         } catch (error) {
                           console.error("Error deleting budget", error)
                         }
                       }}
                     >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
+                      <Trash className="mr-2 h-4 w-4" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
