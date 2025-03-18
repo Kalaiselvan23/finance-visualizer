@@ -75,7 +75,7 @@ export function CategoriesList() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600"
-                      onClick={() => handleDeleteFn(category.id)}
+                      onClick={() => handleDeleteFn(category._id)}
                     >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
